@@ -1,0 +1,210 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Flappy Bird</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #70c5ce;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 3px solid #333;
+            background: #70c5ce;
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="game" width="400" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// Bird
+let bird = {
+    x: 80,
+    y: 300,
+    width: 30,
+    height: 30,
+    velocity: 0
+};
+
+// Game settings
+const gravity = 0.5;
+const jump = -8;
+let pipes = [];
+let score = 0;
+let gameOver = false;
+let frame = 0;
+
+// Make the bird jump
+function fly() {
+    if (!gameOver) {
+        bird.velocity = jump;
+    } else {
+        restartGame();
+    }
+}
+
+document.addEventListener("keydown", function(event) {
+    if (event.code === "Space") {
+        fly();
+    }
+});
+
+canvas.addEventListener("click", fly);
+
+// Create pipes
+function createPipe() {
+    const gap = 150;
+    const topHeight = Math.random() * 250 + 50;
+
+    pipes.push({
+        x: canvas.width,
+        top: topHeight,
+        bottom: topHeight + gap,
+        width: 60,
+        passed: false
+    });
+}
+
+// Restart game
+function restartGame() {
+    bird.y = 300;
+    bird.velocity = 0;
+    pipes = [];
+    score = 0;
+    frame = 0;
+    gameOver = false;
+}
+
+// Collision detection
+function collision(pipe) {
+    return (
+        bird.x < pipe.x + pipe.width &&
+        bird.x + bird.width > pipe.x &&
+        (bird.y < pipe.top ||
+         bird.y + bird.height > pipe.bottom)
+    );
+}
+
+// Draw bird
+function drawBird() {
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+
+    // Eye
+    ctx.fillStyle = "black";
+    ctx.fillRect(bird.x + 20, bird.y + 5, 5, 5);
+}
+
+// Draw pipes
+function drawPipes() {
+    ctx.fillStyle = "green";
+
+    pipes.forEach(pipe => {
+        // Top pipe
+        ctx.fillRect(
+            pipe.x,
+            0,
+            pipe.width,
+            pipe.top
+        );
+
+        // Bottom pipe
+        ctx.fillRect(
+            pipe.x,
+            pipe.bottom,
+            pipe.width,
+            canvas.height - pipe.bottom
+        );
+    });
+}
+
+// Draw score
+function drawScore() {
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("Score: " + score, 20, 40);
+}
+
+// Main game loop
+function gameLoop() {
+
+    // Clear screen
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!gameOver) {
+
+        // Bird movement
+        bird.velocity += gravity;
+        bird.y += bird.velocity;
+
+        // Create pipes
+        if (frame % 100 === 0) {
+            createPipe();
+        }
+
+        // Move pipes
+        pipes.forEach(pipe => {
+            pipe.x -= 3;
+
+            // Score
+            if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+                score++;
+                pipe.passed = true;
+            }
+
+            // Collision
+            if (collision(pipe)) {
+                gameOver = true;
+            }
+        });
+
+        // Remove old pipes
+        pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
+
+        // Hit top or bottom
+        if (bird.y < 0 || bird.y + bird.height > canvas.height) {
+            gameOver = true;
+        }
+
+        frame++;
+    }
+
+    drawBird();
+    drawPipes();
+    drawScore();
+
+    // Game over message
+    if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "40px Arial";
+        ctx.fillText("GAME OVER", 90, 280);
+
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.fillText("Press Space or Click to restart", 75, 320);
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// Start game
+gameLoop();
+
+</script>
+
+</body>
+</html>
+```
