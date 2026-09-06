@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Daily Planner</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        background: #f4f6fb;
+        color: #222;
+    }
+
+    header {
+        background: #4f46e5;
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+
+    header h1 {
+        margin-bottom: 5px;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 25px auto;
+        padding: 15px;
+    }
+
+    .top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    button {
+        border: none;
+        background: #4f46e5;
+        color: white;
+        padding: 9px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: 0.85;
+    }
+
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+    }
+
+    .day-name {
+        font-weight: bold;
+        text-align: center;
+        padding: 8px 0;
+    }
+
+    .day {
+        min-height: 65px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 7px;
+        cursor: pointer;
+        background: #fafafa;
+    }
+
+    .day:hover {
+        background: #eef2ff;
+    }
+
+    .day.today {
+        border: 2px solid #4f46e5;
+    }
+
+    .day.selected {
+        background: #e0e7ff;
+    }
+
+    .task-dot {
+        width: 7px;
+        height: 7px;
+        background: #22c55e;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 3px;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin: 7px 0 12px;
+        font-size: 15px;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 70px;
+    }
+
+    label {
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .task {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .task:last-child {
+        border-bottom: none;
+    }
+
+    .task-info {
+        flex: 1;
+    }
+
+    .task-title {
+        font-weight: bold;
+    }
+
+    .completed .task-title {
+        text-decoration: line-through;
+        color: #999;
+    }
+
+    .task-time {
+        font-size: 12px;
+        color: #777;
+        margin-top: 4px;
+    }
+
+    .delete {
+        background: #ef4444;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .stat {
+        text-align: center;
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .stat-number {
+        font-size: 25px;
+        font-weight: bold;
+        color: #4f46e5;
+    }
+
+    .analysis {
+        line-height: 1.7;
+        margin-top: 15px;
+    }
+
+    .empty {
+        text-align: center;
+        color: #888;
+        padding: 20px;
+    }
+
+    @media(max-width: 700px) {
+        .top-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats {
+            grid-template-columns: 1fr;
+        }
+
+        .day {
+            min-height: 50px;
+            font-size: 12px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>📅 My Daily Planner</h1>
+    <p>Organize your day. Complete your tasks. Improve every day.</p>
+</header>
+
+<div class="container">
+
+    <div class="top-grid">
+
+        <!-- Calendar -->
+        <div class="card">
+            <div class="calendar-header">
+                <button onclick="changeMonth(-1)">←</button>
+                <h2 id="monthYear"></h2>
+                <button onclick="changeMonth(1)">→</button>
+            </div>
+
+            <div class="calendar" id="calendar"></div>
+        </div>
+
+        <!-- Add Task -->
+        <div class="card">
+            <h2>➕ Add Task</h2>
+            <br>
+
+            <label>Task</label>
+            <input id="taskTitle" placeholder="Example: Finish mathematics homework">
+
+            <label>Time</label>
+            <input id="taskTime" type="time">
+
+            <label>Notes</label>
+            <textarea id="taskNotes" placeholder="Optional notes..."></textarea>
+
+            <button onclick="addTask()">Add Task</button>
+        </div>
+
+    </div>
+
+    <!-- Tasks -->
+    <div class="card">
+        <h2 id="selectedDateTitle">Today's Tasks</h2>
+
+        <div id="taskList"></div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="card">
+        <h2>📊 Daily Analysis</h2>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="totalTasks">0</div>
+                <div>Total Tasks</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-number" id="completedTasks">0</div>
+                <div>Completed</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-number" id="completionRate">0%</div>
+                <div>Completion</div>
+            </div>
+        </div>
+
+        <div class="analysis" id="analysisText">
+            Add some tasks to see your daily analysis.
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("plannerTasks")) || [];
+
+let currentDate = new Date();
+let selectedDate = new Date();
+
+function dateKey(date) {
+    return date.toISOString().split("T")[0];
+}
+
+function saveTasks() {
+    localStorage.setItem("plannerTasks", JSON.stringify(tasks));
+}
+
+function renderCalendar() {
+
+    const calendar = document.getElementById("calendar");
+    calendar.innerHTML = "";
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const monthNames = [
+        "January","February","March","April","May","June",
+        "July","August","September","October","November","December"
+    ];
+
+    document.getElementById("monthYear").textContent =
+        monthNames[month] + " " + year;
+
+    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    days.forEach(day => {
+        const element = document.createElement("div");
+        element.className = "day-name";
+        element.textContent = day;
+        calendar.appendChild(element);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for(let i = 0; i < firstDay; i++) {
+        calendar.appendChild(document.createElement("div"));
+    }
+
+    for(let day = 1; day <= daysInMonth; day++) {
+
+        const date = new Date(year, month, day);
+        const key = dateKey(date);
+
+        const element = document.createElement("div");
+        element.className = "day";
+
+        if(key === dateKey(new Date())) {
+            element.classList.add("today");
+        }
+
+        if(key === dateKey(selectedDate)) {
+            element.classList.add("selected");
+        }
+
+        const dayTasks = tasks.filter(t => t.date === key);
+
+        element.innerHTML = `
+            <strong>${day}</strong>
+            ${dayTasks.length > 0 ? '<span class="task-dot"></span>' : ''}
+        `;
+
+        element.onclick = () => {
+            selectedDate = date;
+            renderCalendar();
+            renderTasks();
+        };
+
+        calendar.appendChild(element);
+    }
+}
+
+function changeMonth(amount) {
+    currentDate.setMonth(currentDate.getMonth() + amount);
+    renderCalendar();
+}
+
+function addTask() {
+
+    const title = document.getElementById("taskTitle").value.trim();
+    const time = document.getElementById("taskTime").value;
+    const notes = document.getElementById("taskNotes").value.trim();
+
+    if(!title) {
+        alert("Please enter a task.");
+        return;
+    }
+
+    const task = {
+        id: Date.now(),
+        date: dateKey(selectedDate),
+        title: title,
+        time: time,
+        notes: notes,
+        completed: false
+    };
+
+    tasks.push(task);
+
+    saveTasks();
+
+    document.getElementById("taskTitle").value = "";
+    document.getElementById("taskTime").value = "";
+    document.getElementById("taskNotes").value = "";
+
+    renderCalendar();
+    renderTasks();
+}
+
+function renderTasks() {
+
+    const key = dateKey(selectedDate);
+
+    const list = document.getElementById("taskList");
+
+    const dayTasks = tasks
+        .filter(t => t.date === key)
+        .sort((a,b) => (a.time || "").localeCompare(b.time || ""));
+
+    const formattedDate = selectedDate.toLocaleDateString(
+        undefined,
+        {
+            weekday:"long",
+            year:"numeric",
+            month:"long",
+            day:"numeric"
+        }
+    );
+
+    document.getElementById("selectedDateTitle").textContent =
+        "Tasks for " + formattedDate;
+
+    list.innerHTML = "";
+
+    if(dayTasks.length === 0) {
+        list.innerHTML = `<div class="empty">No tasks for this day 🎉</div>`;
+    }
+
+    dayTasks.forEach(task => {
+
+        const div = document.createElement("div");
+
+        div.className = "task" +
+            (task.completed ? " completed" : "");
+
+        div.innerHTML = `
+            <input type="checkbox"
+                ${task.completed ? "checked" : ""}
+                onchange="toggleTask(${task.id})">
+
+            <div class="task-info">
+                <div class="task-title">${escapeHTML(task.title)}</div>
+
+                ${task.time ?
+                    `<div class="task-time">⏰ ${task.time}</div>` : ""}
+
+                ${task.notes ?
+                    `<div class="task-time">${escapeHTML(task.notes)}</div>` : ""}
+            </div>
+
+            <button class="delete"
+                onclick="deleteTask(${task.id})">
+                Delete
+            </button>
+        `;
+
+        list.appendChild(div);
+    });
+
+    updateAnalysis(dayTasks);
+}
+
+function toggleTask(id) {
+
+    const task = tasks.find(t => t.id === id);
+
+    if(task) {
+        task.completed = !task.completed;
+    }
+
+    saveTasks();
+
+    renderCalendar();
+    renderTasks();
+}
+
+function deleteTask(id) {
+
+    tasks = tasks.filter(t => t.id !== id);
+
+    saveTasks();
+
+    renderCalendar();
+    renderTasks();
+}
+
+function updateAnalysis(dayTasks) {
+
+    const total = dayTasks.length;
+
+    const completed =
+        dayTasks.filter(t => t.completed).length;
+
+    const percentage =
+        total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    document.getElementById("totalTasks").textContent = total;
+    document.getElementById("completedTasks").textContent = completed;
+    document.getElementById("completionRate").textContent =
+        percentage + "%";
+
+    let message = "";
+
+    if(total === 0) {
+        message = "You have no tasks planned for this day.";
+    }
+    else if(percentage === 100) {
+        message = "🎉 Excellent! You completed everything planned for today!";
+    }
+    else if(percentage >= 75) {
+        message = "👏 Great work! You completed most of your tasks.";
+    }
+    else if(percentage >= 50) {
+        message = "👍 Good progress. Try to finish the remaining tasks.";
+    }
+    else if(percentage > 0) {
+        message = "💪 You have started well. Keep going!";
+    }
+    else {
+        message = "📌 You have tasks waiting. Start with the most important one.";
+    }
+
+    document.getElementById("analysisText").textContent = message;
+}
+
+function escapeHTML(text) {
+
+    const div = document.createElement("div");
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+/* Browser Notifications */
+
+if("Notification" in window) {
+
+    if(Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+}
+
+function checkReminders() {
+
+    const now = new Date();
+
+    const today = dateKey(now);
+
+    const currentTime =
+        String(now.getHours()).padStart(2,"0") +
+        ":" +
+        String(now.getMinutes()).padStart(2,"0");
+
+    tasks.forEach(task => {
+
+        if(
+            task.date === today &&
+            task.time === currentTime &&
+            !task.completed &&
+            !task.reminded
+        ) {
+
+            if("Notification" in window &&
+               Notification.permission === "granted") {
+
+                new Notification(
+                    "⏰ Task Reminder",
+                    {
+                        body: task.title
+                    }
+                );
+            }
+            else {
+                alert("⏰ Reminder: " + task.title);
+            }
+
+            task.reminded = true;
+            saveTasks();
+        }
+    });
+}
+
+setInterval(checkReminders, 30000);
+
+renderCalendar();
+renderTasks();
+
+</script>
+
+</body>
+</html>
